@@ -78,12 +78,14 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden"
       >
         {/* Banner header */}
-        <div className="bg-slate-900 px-8 py-6 text-white text-center">
-          <div className="inline-flex items-center justify-center bg-white/10 p-3 rounded-full mb-3">
-            <Lock className="w-6 h-6 text-slate-200" />
+        <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 px-8 py-7 text-white text-center border-b border-slate-800">
+          <div className="inline-flex items-center justify-center bg-white/10 p-3 rounded-xl mb-3 shadow-inner backdrop-blur-sm">
+            <Lock className="w-6 h-6 text-indigo-200" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight">Supabase 汎用ビューア</h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-indigo-100 bg-clip-text text-transparent">
+            Supabase 汎用ビューア
+          </h1>
+          <p className="text-xs text-indigo-200/60 mt-1.5 font-medium">
             Database Administration & Viewer Panel
           </p>
         </div>
@@ -164,7 +166,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="VIEWER_PASSWORD を入力"
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 transition font-mono text-center text-lg"
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50/80 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all font-mono text-center text-lg tracking-wider text-slate-800 placeholder-slate-400"
                 disabled={loading}
               />
             </div>
@@ -173,17 +175,17 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               <motion.div
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-3 text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2"
+                className="p-3.5 text-xs text-rose-600 bg-rose-50/70 border border-rose-100 rounded-xl flex items-start gap-2.5"
               >
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{error}</span>
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+                <span className="leading-normal font-medium">{error}</span>
               </motion.div>
             )}
 
             <button
               type="submit"
               disabled={loading || !password}
-              className="w-full bg-slate-950 hover:bg-slate-900 disabled:bg-slate-300 text-white font-medium py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 hover:from-slate-800 hover:via-indigo-900 hover:to-slate-800 text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:shadow-lg disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 disabled:shadow-none transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
             >
               {loading ? (
                 <>

@@ -306,8 +306,8 @@ export default function RecordModal({
                           value={val === null ? "" : String(val)}
                           onChange={(e) => handleInputChange(col.name, e.target.value)}
                           placeholder={val === null ? "NULL (空の値)" : "テキストを入力..."}
-                          className={`w-full px-3 py-2 border rounded-xl font-sans text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 transition ${
-                            val === null ? "bg-slate-50 border-dashed border-slate-300 placeholder-slate-400" : "bg-white border-slate-300"
+                          className={`w-full px-3 py-2 border rounded-xl font-sans text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all ${
+                            val === null ? "bg-slate-50 border-dashed border-slate-200 placeholder-slate-400" : "bg-white border-slate-200 text-slate-800"
                           }`}
                         />
                       ) : (
@@ -316,8 +316,8 @@ export default function RecordModal({
                           value={val === null ? "" : String(val)}
                           onChange={(e) => handleInputChange(col.name, isNumber ? (e.target.value === "" ? null : Number(e.target.value)) : e.target.value)}
                           placeholder={val === null ? "NULL (空の値)" : "値を入力..."}
-                          className={`w-full px-3 py-2 border rounded-xl font-mono text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 transition ${
-                            val === null ? "bg-slate-50 border-dashed border-slate-300 placeholder-slate-400" : "bg-white border-slate-300"
+                          className={`w-full px-3 py-2 border rounded-xl font-mono text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all ${
+                            val === null ? "bg-slate-50 border-dashed border-slate-200 placeholder-slate-400" : "bg-white border-slate-200 text-slate-800"
                           }`}
                         />
                       )}
@@ -331,15 +331,15 @@ export default function RecordModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl transition"
+                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl transition cursor-pointer"
               >
                 キャンセル
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-xs font-semibold text-white bg-slate-950 hover:bg-slate-900 rounded-xl flex items-center gap-1.5 shadow-sm transition"
+                className="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 rounded-xl flex items-center gap-1.5 shadow-md shadow-indigo-100/50 transition cursor-pointer"
               >
-                <Save className="w-4 h-4" />
+                <Save className="w-4 h-4 text-indigo-200" />
                 保存する
               </button>
             </div>

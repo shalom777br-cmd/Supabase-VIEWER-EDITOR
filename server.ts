@@ -230,9 +230,24 @@ app.post("/api/table/:tableName/query", async (req, res) => {
       throw error;
     }
 
+    // Diagnostics: Calculate total records in table (without user_id filter) to provide user guidance
+    let unfilteredCount = 0;
+    if (hasUserId) {
+      try {
+        const diagQuery = supabase.from(tableName).select("*", { count: "exact", head: true });
+        const { count: diagCount } = await diagQuery;
+        unfilteredCount = diagCount || 0;
+      } catch (err) {
+        unfilteredCount = 0;
+      }
+    } else {
+      unfilteredCount = count || 0;
+    }
+
     res.json({
       data: data || [],
       count: count || 0,
+      unfilteredCount,
       page,
       pageSize,
     });

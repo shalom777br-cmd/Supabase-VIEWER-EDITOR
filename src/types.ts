@@ -23,6 +23,7 @@ export interface ConnectionStatus {
 export interface QueryResult {
   data: Record<string, any>[];
   count: number;
+  unfilteredCount?: number;
   page: number;
   pageSize: number;
 }
