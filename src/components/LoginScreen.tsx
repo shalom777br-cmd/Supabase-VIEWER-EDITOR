@@ -22,12 +22,37 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   const checkHealth = async () => {
     try {
       const res = await fetch("/api/health");
-      const data = await res.json();
-      setHealth(data);
+      const text = await res.text();
+      
+      if (!res.ok) {
+        const snippet = text ? ` (${text.substring(0, 80).trim()})` : "";
+        setHealth({
+          status: "error",
+          message: `Backend returned HTTP ${res.status} ${res.statusText}${snippet}`,
+          url: null,
+          tableCount: 0,
+          passwordSet: false,
+        });
+        return;
+      }
+
+      try {
+        const data = JSON.parse(text);
+        setHealth(data);
+      } catch (jsonErr: any) {
+        const snippet = text ? `: ${text.substring(0, 80).trim()}` : "";
+        setHealth({
+          status: "error",
+          message: `Backend response is not valid JSON${snippet}`,
+          url: null,
+          tableCount: 0,
+          passwordSet: false,
+        });
+      }
     } catch (err: any) {
       setHealth({
         status: "error",
-        message: "Failed to connect to the backend server.",
+        message: `Network error: ${err.message || "Failed to fetch"}`,
         url: null,
         tableCount: 0,
         passwordSet: false,
