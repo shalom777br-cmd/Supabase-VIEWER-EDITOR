@@ -12,6 +12,8 @@ import {
   ChevronRight,
   ShieldCheck,
   HelpCircle,
+  X,
+  Eraser,
 } from "lucide-react";
 import { TableSchema, TableColumn, QueryResult, DuplicateScanResult } from "../types";
 
@@ -50,6 +52,15 @@ export default function MainViewer({
   const [scanningDuplicates, setScanningDuplicates] = useState(false);
   const [showDuplicatePanel, setShowDuplicatePanel] = useState(false);
 
+  // Inline cell editing/deleting state
+  const [editingCell, setEditingCell] = useState<{
+    rowIdx: number;
+    colName: string;
+    originalRow: Record<string, any>;
+  } | null>(null);
+  const [editValue, setEditValue] = useState<string>("");
+  const [savingCell, setSavingCell] = useState<boolean>(false);
+
   // Load target columns for filtering
   useEffect(() => {
     const colNames = table.columns.map((c) => c.name);
@@ -63,7 +74,119 @@ export default function MainViewer({
     setSelectedIds([]);
     setDuplicateScan(null);
     setShowDuplicatePanel(false);
+    setEditingCell(null);
   }, [table]);
+
+  const isReadOnlyColumn = (colName: string) => {
+    return ["id", "created_at", "updated_at", "user_id"].includes(colName);
+  };
+
+  const handleSaveCellInline = async () => {
+    if (!editingCell) return;
+    setSavingCell(true);
+    try {
+      const { originalRow, colName } = editingCell;
+      
+      const match: any = {};
+      const colNames = table.columns.map((c) => c.name);
+      if (colNames.includes("id")) {
+        match.id = originalRow.id;
+      } else {
+        Object.assign(match, originalRow);
+      }
+
+      const columnDef = table.columns.find((c) => c.name === colName);
+
+      // Convert editValue based on column type
+      let finalVal: any = editValue;
+      if (editValue === "") {
+        finalVal = null; // Clear content / Set to NULL
+      } else if (columnDef?.type === "boolean") {
+        finalVal = editValue === "true";
+      } else if (["integer", "numeric", "number"].includes(columnDef?.type || "")) {
+        finalVal = Number(editValue);
+      }
+
+      const changes = {
+        [colName]: finalVal,
+      };
+
+      const res = await fetch(`/api/table/${table.name}/update`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${password}`,
+        },
+        body: JSON.stringify({
+          match,
+          changes,
+          hasUserId: table.hasUserId,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "セルの更新に失敗しました。");
+      }
+
+      // Success: refresh local data list
+      await fetchTableData();
+      setEditingCell(null);
+    } catch (err: any) {
+      alert(`更新エラー: ${err.message}`);
+    } finally {
+      setSavingCell(false);
+    }
+  };
+
+  const handleDeleteCellInline = async () => {
+    if (!editingCell) return;
+    const confirmMsg = `このセル「${editingCell.colName}」の値を削除（NULLに設定）してよろしいですか？`;
+    if (!window.confirm(confirmMsg)) return;
+
+    setSavingCell(true);
+    try {
+      const { originalRow, colName } = editingCell;
+      
+      const match: any = {};
+      const colNames = table.columns.map((c) => c.name);
+      if (colNames.includes("id")) {
+        match.id = originalRow.id;
+      } else {
+        Object.assign(match, originalRow);
+      }
+
+      const changes = {
+        [colName]: null,
+      };
+
+      const res = await fetch(`/api/table/${table.name}/update`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${password}`,
+        },
+        body: JSON.stringify({
+          match,
+          changes,
+          hasUserId: table.hasUserId,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "セルの削除に失敗しました。");
+      }
+
+      // Success: refresh local data list
+      await fetchTableData();
+      setEditingCell(null);
+    } catch (err: any) {
+      alert(`削除エラー: ${err.message}`);
+    } finally {
+      setSavingCell(false);
+    }
+  };
 
   // Fetch unique filter values dynamically
   useEffect(() => {
@@ -563,29 +686,116 @@ export default function MainViewer({
                     {table.columns.map((col) => {
                       const val = row[col.name];
                       const isTargetDup = isDuplicated && col.name === dupColumn;
+                      const readOnly = isReadOnlyColumn(col.name);
+                      const isEditing = editingCell?.rowIdx === idx && editingCell?.colName === col.name;
 
                       return (
                         <td
                           key={col.name}
-                          className={`px-5 py-3.5 font-mono truncate max-w-sm text-slate-700 ${
+                          className={`px-5 py-3.5 font-mono truncate max-w-sm text-slate-700 transition-all ${
                             isTargetDup ? "bg-amber-100/50 font-bold text-amber-900" : ""
+                          } ${
+                            !readOnly && !isEditing
+                              ? "cursor-pointer hover:bg-slate-100/90 hover:text-slate-900 group/cell relative"
+                              : ""
                           }`}
-                          title={val === null ? "NULL" : String(val)}
+                          onClick={() => {
+                            if (!readOnly && !isEditing) {
+                              setEditingCell({
+                                rowIdx: idx,
+                                colName: col.name,
+                                originalRow: row,
+                              });
+                              setEditValue(val === null ? "" : String(val));
+                            }
+                          }}
+                          title={isEditing ? undefined : (val === null ? "NULL (クリックして編集)" : `${String(val)} (クリックして編集)`)}
                         >
-                          {val === null ? (
-                            <span className="text-slate-300 italic font-sans text-[10px]">null</span>
-                          ) : typeof val === "boolean" ? (
-                            <span
-                              className={`px-1.5 py-0.5 rounded font-sans text-[9px] font-bold ${
-                                val
-                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                  : "bg-slate-100 text-slate-600 border border-slate-200"
-                              }`}
-                            >
-                              {String(val)}
-                            </span>
+                          {isEditing ? (
+                            <div className="flex flex-col gap-1.5 min-w-[150px]" onClick={(e) => e.stopPropagation()}>
+                              {col.type === "boolean" ? (
+                                <select
+                                  value={editValue}
+                                  onChange={(e) => setEditValue(e.target.value)}
+                                  className="w-full px-2 py-1 text-xs border border-indigo-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-sans"
+                                  autoFocus
+                                >
+                                  <option value="true">true</option>
+                                  <option value="false">false</option>
+                                  <option value="">null</option>
+                                </select>
+                              ) : (
+                                <input
+                                  type={["integer", "numeric", "number"].includes(col.type) ? "number" : "text"}
+                                  value={editValue}
+                                  onChange={(e) => setEditValue(e.target.value)}
+                                  className="w-full px-2 py-1 text-xs border border-indigo-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-mono"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      handleSaveCellInline();
+                                    } else if (e.key === "Escape") {
+                                      setEditingCell(null);
+                                    }
+                                  }}
+                                />
+                              )}
+                              <div className="flex items-center gap-1.5 justify-end">
+                                <button
+                                  onClick={handleSaveCellInline}
+                                  disabled={savingCell}
+                                  title="保存 (Enter)"
+                                  className="p-1 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded transition shadow-sm cursor-pointer"
+                                >
+                                  {savingCell ? (
+                                    <RefreshCw className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <Check className="w-3 h-3" />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={handleDeleteCellInline}
+                                  disabled={savingCell}
+                                  title="値を削除 (NULLに設定)"
+                                  className="p-1 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded transition shadow-sm cursor-pointer"
+                                >
+                                  <Eraser className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={() => setEditingCell(null)}
+                                  disabled={savingCell}
+                                  title="キャンセル (Esc)"
+                                  className="p-1 bg-slate-100 text-slate-500 hover:bg-slate-500 hover:text-white rounded transition shadow-sm cursor-pointer"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
                           ) : (
-                            String(val)
+                            <div className="flex items-center justify-between gap-1">
+                              <span>
+                                {val === null ? (
+                                  <span className="text-slate-300 italic font-sans text-[10px]">null</span>
+                                ) : typeof val === "boolean" ? (
+                                  <span
+                                    className={`px-1.5 py-0.5 rounded font-sans text-[9px] font-bold ${
+                                      val
+                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                        : "bg-slate-100 text-slate-600 border border-slate-200"
+                                    }`}
+                                  >
+                                    {String(val)}
+                                  </span>
+                                ) : (
+                                  String(val)
+                                )}
+                              </span>
+                              {!readOnly && (
+                                <span className="opacity-0 group-hover/cell:opacity-100 transition-opacity ml-1 shrink-0 text-[10px] text-slate-400 font-sans font-normal border border-slate-200 bg-slate-50 rounded px-1 py-0.5 shadow-sm">
+                                  編集
+                                </span>
+                              )}
+                            </div>
                           )}
                         </td>
                       );
