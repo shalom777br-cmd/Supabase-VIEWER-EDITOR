@@ -1,0 +1,6 @@
+{
+  "name": "Supabase Generic Viewer and Editor",
+  "description": "A secure full-stack generic viewer and editor for Supabase tables, allowing dynamic schema discovery, viewing, editing, deleting, and duplication checks.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
