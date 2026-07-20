@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Search, LogOut, ShieldAlert, ShieldCheck, Database } from "lucide-react";
+import { Table, Search, LogOut, ShieldAlert, ShieldCheck, Database, ChevronLeft } from "lucide-react";
 import { TableSchema } from "../types";
 
 interface SidebarProps {
@@ -9,6 +9,7 @@ interface SidebarProps {
   onLogout: () => void;
   loading: boolean;
   username: string;
+  onToggleCollapse?: () => void;
 }
 
 export default function Sidebar({
@@ -18,6 +19,7 @@ export default function Sidebar({
   onLogout,
   loading,
   username,
+  onToggleCollapse,
 }: SidebarProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -29,18 +31,29 @@ export default function Sidebar({
     <div className="w-80 border-r border-slate-900 bg-slate-950 flex flex-col h-screen shrink-0 text-slate-100">
       {/* Brand Header */}
       <div className="p-6 border-b border-slate-900/80 bg-slate-950/90">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-950/50">
-            <Database className="w-5 h-5 text-indigo-100" />
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-950/50">
+              <Database className="w-5 h-5 text-indigo-100" />
+            </div>
+            <div>
+              <h1 className="font-extrabold text-white text-[15px] tracking-tight leading-none bg-gradient-to-r from-white to-slate-200 bg-clip-text">
+                Supabase 汎用
+              </h1>
+              <span className="text-[10px] text-indigo-400 font-bold tracking-wider uppercase block mt-1">
+                VIEWER & EDITOR
+              </span>
+            </div>
           </div>
-          <div>
-            <h1 className="font-extrabold text-white text-[15px] tracking-tight leading-none bg-gradient-to-r from-white to-slate-200 bg-clip-text">
-              Supabase 汎用
-            </h1>
-            <span className="text-[10px] text-indigo-400 font-bold tracking-wider uppercase block mt-1">
-              VIEWER & EDITOR
-            </span>
-          </div>
+          {onToggleCollapse && (
+            <button
+              onClick={onToggleCollapse}
+              className="p-1.5 hover:bg-slate-900 rounded-lg text-slate-400 hover:text-white transition cursor-pointer flex items-center justify-center border border-slate-900"
+              title="サイドバーを非表示"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          )}
         </div>
         <p className="text-[10.5px] text-slate-400 break-all leading-normal flex items-center gap-1 bg-slate-900/60 p-2 rounded-lg border border-slate-900">
           <span className="font-semibold text-slate-500 shrink-0">UID:</span>

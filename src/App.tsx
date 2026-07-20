@@ -4,7 +4,7 @@ import LoginScreen from "./components/LoginScreen";
 import Sidebar from "./components/Sidebar";
 import MainViewer from "./components/MainViewer";
 import RecordModal from "./components/RecordModal";
-import { Database, ShieldAlert, AlertCircle } from "lucide-react";
+import { Database, ShieldAlert, AlertCircle, ChevronRight } from "lucide-react";
 
 export default function App() {
   const [password, setPassword] = useState<string | null>(null);
@@ -15,6 +15,7 @@ export default function App() {
   const [loadingTables, setLoadingTables] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Auto-login from local storage
   useEffect(() => {
@@ -167,14 +168,19 @@ export default function App() {
   return (
     <div className="flex h-screen bg-white font-sans overflow-hidden">
       {/* Sidebar selection */}
-      <Sidebar
-        tables={tables}
-        selectedTable={selectedTable}
-        onSelectTable={setSelectedTable}
-        onLogout={handleLogout}
-        loading={loadingTables}
-        username="shalom777br"
-      />
+      <div className={`transition-all duration-300 ease-in-out shrink-0 overflow-hidden ${
+        isSidebarCollapsed ? "w-0 border-r-0 opacity-0" : "w-80 opacity-100"
+      }`}>
+        <Sidebar
+          tables={tables}
+          selectedTable={selectedTable}
+          onSelectTable={setSelectedTable}
+          onLogout={handleLogout}
+          loading={loadingTables}
+          username="shalom777br"
+          onToggleCollapse={() => setIsSidebarCollapsed(true)}
+        />
+      </div>
 
       {/* Main Workspace Panel */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
@@ -197,9 +203,21 @@ export default function App() {
             password={password}
             onEditRecord={handleEditRecord}
             refreshTrigger={refreshTrigger}
+            isSidebarCollapsed={isSidebarCollapsed}
+            onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           />
         ) : (
-          <div className="flex-1 bg-slate-50 flex flex-col justify-center items-center p-8">
+          <div className="flex-1 bg-slate-50 flex flex-col justify-center items-center p-8 relative">
+            {isSidebarCollapsed && (
+              <button
+                onClick={() => setIsSidebarCollapsed(false)}
+                className="absolute left-6 top-6 p-2 bg-white border border-slate-200 shadow-sm rounded-xl text-slate-600 hover:bg-slate-50 transition cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                title="テーブル一覧を表示"
+              >
+                <ChevronRight className="w-4 h-4" />
+                テーブル一覧を表示
+              </button>
+            )}
             <Database className="w-16 h-16 text-slate-300 animate-pulse mb-4" />
             <h3 className="font-bold text-slate-800 text-base">
               管理用テーブルがありません

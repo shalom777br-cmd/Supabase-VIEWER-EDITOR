@@ -22,6 +22,8 @@ interface MainViewerProps {
   password: string;
   onEditRecord: (record: Record<string, any> | null) => void;
   refreshTrigger: number;
+  isSidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 export default function MainViewer({
@@ -29,6 +31,8 @@ export default function MainViewer({
   password,
   onEditRecord,
   refreshTrigger,
+  isSidebarCollapsed = false,
+  onToggleSidebar,
 }: MainViewerProps) {
   const [data, setData] = useState<Record<string, any>[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -400,6 +404,19 @@ export default function MainViewer({
       <div className="px-8 py-5 border-b border-slate-200/80 bg-white flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between shrink-0">
         <div>
           <div className="flex items-center gap-2.5">
+            {onToggleSidebar && (
+              <button
+                onClick={onToggleSidebar}
+                className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-800 transition mr-0.5 cursor-pointer flex items-center justify-center border border-slate-200/80 shadow-sm bg-white"
+                title={isSidebarCollapsed ? "テーブル一覧を表示" : "テーブル一覧を非表示"}
+              >
+                {isSidebarCollapsed ? (
+                  <ChevronRight className="w-4 h-4 text-slate-600" />
+                ) : (
+                  <ChevronLeft className="w-4 h-4 text-slate-600" />
+                )}
+              </button>
+            )}
             <span className="font-mono text-xl font-extrabold text-slate-900 tracking-tight">
               {table.name}
             </span>
