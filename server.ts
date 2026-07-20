@@ -469,6 +469,12 @@ app.post("/api/table/:tableName/scan-duplicates", async (req, res) => {
 // Vite and Static Assets serving setup
 // -------------------------------------------------------------
 async function startServer() {
+  if (process.env.VERCEL) {
+    // On Vercel serverless environment, we only serve API routes.
+    // Static assets are handled natively by Vercel static router.
+    return;
+  }
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -489,3 +495,5 @@ async function startServer() {
 }
 
 startServer();
+
+export default app;
