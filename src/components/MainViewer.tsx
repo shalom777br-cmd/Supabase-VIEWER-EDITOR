@@ -65,6 +65,9 @@ export default function MainViewer({
   const [editValue, setEditValue] = useState<string>("");
   const [savingCell, setSavingCell] = useState<boolean>(false);
 
+  // Bypass user_id filter toggle state
+  const [bypassUserIdFilter, setBypassUserIdFilter] = useState<boolean>(false);
+
   // Load target columns for filtering
   useEffect(() => {
     const colNames = table.columns.map((c) => c.name);
@@ -79,6 +82,7 @@ export default function MainViewer({
     setDuplicateScan(null);
     setShowDuplicatePanel(false);
     setEditingCell(null);
+    setBypassUserIdFilter(false);
   }, [table]);
 
   const isReadOnlyColumn = (colName: string) => {
@@ -124,7 +128,7 @@ export default function MainViewer({
         body: JSON.stringify({
           match,
           changes,
-          hasUserId: table.hasUserId,
+          hasUserId: bypassUserIdFilter ? false : table.hasUserId,
         }),
       });
 
@@ -173,7 +177,7 @@ export default function MainViewer({
         body: JSON.stringify({
           match,
           changes,
-          hasUserId: table.hasUserId,
+          hasUserId: bypassUserIdFilter ? false : table.hasUserId,
         }),
       });
 
@@ -208,7 +212,7 @@ export default function MainViewer({
             },
             body: JSON.stringify({
               columnName: col,
-              hasUserId: table.hasUserId,
+              hasUserId: bypassUserIdFilter ? false : table.hasUserId,
             }),
           });
           if (res.ok) {
@@ -223,7 +227,7 @@ export default function MainViewer({
     };
 
     fetchFilterOptions();
-  }, [availableFilters, table, password, refreshTrigger]);
+  }, [availableFilters, table, password, refreshTrigger, bypassUserIdFilter]);
 
   // Fetch paginated table rows
   const fetchTableData = async () => {
@@ -242,7 +246,7 @@ export default function MainViewer({
           search,
           filters: activeFilters,
           columns: table.columns,
-          hasUserId: table.hasUserId,
+          hasUserId: bypassUserIdFilter ? false : table.hasUserId,
         }),
       });
 
@@ -265,7 +269,7 @@ export default function MainViewer({
   // Re-fetch whenever dependency parameters change
   useEffect(() => {
     fetchTableData();
-  }, [table, page, activeFilters, refreshTrigger]);
+  }, [table, page, activeFilters, refreshTrigger, bypassUserIdFilter]);
 
   // Keypress or search trigger
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -305,7 +309,7 @@ export default function MainViewer({
         },
         body: JSON.stringify({
           rows: rowsToDelete,
-          hasUserId: table.hasUserId,
+          hasUserId: bypassUserIdFilter ? false : table.hasUserId,
         }),
       });
 
@@ -336,7 +340,7 @@ export default function MainViewer({
         },
         body: JSON.stringify({
           columns: table.columns,
-          hasUserId: table.hasUserId,
+          hasUserId: bypassUserIdFilter ? false : table.hasUserId,
         }),
       });
 
@@ -421,10 +425,29 @@ export default function MainViewer({
               {table.name}
             </span>
             {table.hasUserId && (
-              <span className="flex items-center gap-1.5 text-[10.5px] bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-semibold px-2.5 py-0.5 rounded-full shadow-sm">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                自動 user_id フィルタ適用中
-              </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`flex items-center gap-1.5 text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full shadow-sm border transition-all ${
+                  bypassUserIdFilter 
+                    ? "bg-amber-50 text-amber-700 border-amber-200" 
+                    : "bg-emerald-50 text-emerald-700 border-emerald-200/60"
+                }`}>
+                  <ShieldCheck className={`w-3.5 h-3.5 ${bypassUserIdFilter ? "text-amber-600 animate-pulse" : "text-emerald-600"}`} />
+                  {bypassUserIdFilter ? "user_id フィルタ解除中" : "自動 user_id フィルタ適用中"}
+                </span>
+                
+                <label className="flex items-center gap-1.5 cursor-pointer text-[10.5px] bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold px-2.5 py-1 rounded-full shadow-sm select-none transition-all">
+                  <input
+                    type="checkbox"
+                    checked={bypassUserIdFilter}
+                    onChange={(e) => {
+                      setBypassUserIdFilter(e.target.checked);
+                      setPage(1);
+                    }}
+                    className="rounded text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5 cursor-pointer"
+                  />
+                  <span>すべてのレコードを表示 (合計: {unfilteredCount !== undefined ? unfilteredCount : "..."}件)</span>
+                </label>
+              </div>
             )}
           </div>
           <p className="text-xs text-slate-500 mt-1.5 font-medium">
@@ -625,7 +648,7 @@ export default function MainViewer({
             <p className="font-bold text-base text-slate-800 mb-1">レコードが存在しません</p>
             
             {table.hasUserId && unfilteredCount !== undefined && unfilteredCount > 0 ? (
-              <div className="mt-4 p-5 bg-amber-50/80 border border-amber-200 text-amber-900 rounded-xl text-xs text-left space-y-2.5 leading-relaxed">
+              <div className="mt-4 p-5 bg-amber-50/80 border border-amber-200 text-amber-900 rounded-xl text-xs text-left space-y-3 leading-relaxed">
                 <p className="font-bold flex items-center gap-1.5 text-amber-800">
                   <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                   重要：user_id フィルタ適用中
@@ -638,6 +661,18 @@ export default function MainViewer({
                 <p>
                   右上の<strong>「新規データ追加」</strong>ボタンから新しいレコードを作成すると、自動的にあなたの <code>user_id</code> が割り当てられ、即座にここに表示・管理できるようになります。
                 </p>
+                <div className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-t border-amber-200/50">
+                  <span className="text-[11px] text-amber-800/80 font-medium">他のユーザーのレコードも含めて、すべてのデータを確認・編集しますか？</span>
+                  <button
+                    onClick={() => {
+                      setBypassUserIdFilter(true);
+                      setPage(1);
+                    }}
+                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[11px] font-bold shadow-sm transition cursor-pointer shrink-0"
+                  >
+                    すべてのレコード ({unfilteredCount}件) を表示する
+                  </button>
+                </div>
               </div>
             ) : (
               <p className="text-xs text-slate-400 mt-1">新規レコードを追加するか、検索条件をクリアしてください。</p>
